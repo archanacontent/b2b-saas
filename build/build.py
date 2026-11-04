@@ -20,6 +20,18 @@ MODULES = [
     ("performance-and-optimisation", "Performance", "Performance", "Agree on success early and feed the results back."),
 ]
 
+def whole_sentences(text, limit=155):
+    """Keep whole sentences up to the limit, so descriptions never stop mid-word."""
+    if len(text) <= limit:
+        return text
+    out = ""
+    for sent in re.split(r"(?<=[.!?])\s+", text):
+        nxt = (out + " " + sent).strip()
+        if len(nxt) > limit:
+            break
+        out = nxt
+    return out or text[:limit].rsplit(" ", 1)[0] + "."
+
 def head(title, desc, url, rel):
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -346,7 +358,7 @@ def build():
             pager += f'<a class="next" href="../{nxt[0]}/"><span>Next</span>{nxt[2]}</a>'
         pager += "</nav>"
         intro = re.search(r"\n\n(.+?)\n", md).group(1)
-        desc = re.sub(r"\s+", " ", intro)[:155]
+        desc = whole_sentences(re.sub(r"\s+", " ", intro))
         page = (head(f"{h1} | {TITLE}", desc, SITE + slug + "/", "../") +
                 f'<main class="binder"><article class="sheet"><div class="content">{body}{pager}{FOOT}</div></article>{tabs(slug, "../")}</main>' +
                 CALC_JS + "</body></html>")
